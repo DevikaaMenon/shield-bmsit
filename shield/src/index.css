@@ -1,0 +1,223 @@
+@import "tailwindcss";
+
+/* Tokens — see DESIGN.md. One dominant (bone), one accent (marvel), ink neutral. */
+@theme {
+  --color-bone: #edeae3;
+  --color-ink: #0e0e0e;
+  --color-marvel: #ec1d24;
+
+  --font-display: "Big Shoulders Display", "Impact", sans-serif;
+  --font-sans: "Instrument Sans", "Helvetica Neue", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 64px;
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--color-marvel);
+  color: var(--color-bone);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-marvel);
+  outline-offset: 2px;
+}
+
+/* Reticle replaces the system cursor on fine pointers */
+html.reticle-on,
+html.reticle-on * {
+  cursor: none !important;
+}
+
+@layer components {
+/* ---------- type ---------- */
+.display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 0.86;
+  letter-spacing: -0.005em;
+}
+.display-thin {
+  font-family: var(--font-display);
+  font-weight: 200;
+  text-transform: uppercase;
+  line-height: 0.86;
+  letter-spacing: 0;
+}
+.label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ---------- structure ---------- */
+.slab {
+  background: var(--color-bone);
+  border: 2px solid var(--color-ink);
+  box-shadow: 6px 6px 0 var(--color-ink);
+}
+.rule {
+  border-top: 2px solid var(--color-ink);
+}
+.hatch {
+  background-image: repeating-linear-gradient(-45deg, var(--color-marvel) 0 2px, transparent 2px 6px);
+}
+.hatch-ink {
+  background-image: repeating-linear-gradient(-45deg, var(--color-ink) 0 1px, transparent 1px 6px);
+}
+.grid-paper {
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--color-ink) 7%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-ink) 7%, transparent) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Image strip with stepped pixel-cut ends (reference signature) */
+.stepcut {
+  clip-path: polygon(
+    0 25%, 2% 25%, 2% 0, 6% 0, 6% 10%, 94% 10%, 94% 0, 98% 0, 98% 25%, 100% 25%,
+    100% 75%, 98% 75%, 98% 100%, 94% 100%, 94% 90%, 6% 90%, 6% 100%, 2% 100%, 2% 75%, 0 75%
+  );
+}
+
+/* Logo via mask so it takes currentColor */
+.logo-mask {
+  background: currentColor;
+  -webkit-mask: var(--src) center / contain no-repeat;
+  mask: var(--src) center / contain no-repeat;
+}
+
+/* Portraits: blurred lo placeholder → sharp mono → stepped colour wipe on hover/selection */
+.pt {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-ink);
+}
+.pt img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pt-lo {
+  filter: grayscale(1) blur(6px);
+  scale: 1.1;
+}
+.pt-mono {
+  filter: grayscale(1) contrast(1.08) brightness(1.02);
+}
+.pt-color {
+  clip-path: inset(100% 0 0 0);
+  transition: clip-path 0.55s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.pt:hover .pt-color,
+.group:hover .pt-color,
+.pt.is-color .pt-color {
+  clip-path: inset(0 0 0 0);
+}
+.pt.no-hover:not(.is-color) .pt-color {
+  clip-path: inset(100% 0 0 0);
+}
+.pt-red {
+  position: absolute;
+  inset: 0;
+  background: var(--color-marvel);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+/* ---------- controls ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 12px 16px;
+  border: 2px solid var(--color-ink);
+  background: var(--color-bone);
+  color: var(--color-ink);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.btn:hover:not(:disabled) {
+  background: var(--color-ink);
+  color: var(--color-bone);
+}
+.btn:active:not(:disabled) {
+  translate: 2px 2px;
+}
+.btn:disabled {
+  cursor: not-allowed;
+  border-style: dashed;
+  color: color-mix(in srgb, var(--color-ink) 40%, transparent);
+}
+.btn-red {
+  background: var(--color-marvel);
+  border-color: var(--color-marvel);
+  color: var(--color-bone);
+}
+.btn-red:hover:not(:disabled) {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+}
+.btn-inv {
+  background: transparent;
+  border-color: var(--color-bone);
+  color: var(--color-bone);
+}
+.btn-inv:hover:not(:disabled) {
+  background: var(--color-bone);
+  color: var(--color-ink);
+}
+
+/* Active index item = outlined box (reference cue) */
+.boxed {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+}
+
+@keyframes marquee {
+  to { transform: translateX(-50%); }
+}
+.marquee {
+  animation: marquee 30s linear infinite;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+.blink {
+  animation: blink 1s steps(1) infinite;
+}
+
+.scrollbar-thin::-webkit-scrollbar { height: 4px; width: 4px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: var(--color-ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
