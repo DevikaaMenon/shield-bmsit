@@ -11,7 +11,7 @@
  */
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Plugin } from 'vite'
-import { DB_PATH, fileBytes, getDb, query, record, summary, tableRows, type DbEvent } from './db'
+import type { DbEvent } from './db'
 import { EVENT_TYPES } from '../src/lib/records'
 
 function send(res: ServerResponse, status: number, body: unknown) {
@@ -30,9 +30,15 @@ async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> 
   return raw ? JSON.parse(raw) : {}
 }
 
+// node:sqlite is loaded only when a dev/preview server starts — never during `vite build`,
+// so static builds (e.g. Vercel) work on any Node version.
+let dbModule: Promise<typeof import('./db')> | null = null
+const loadDb = () => (dbModule ??= import('./db'))
+
 async function handle(req: IncomingMessage, res: ServerResponse, next: () => void) {
   const url = new URL(req.url ?? '/', 'http://local')
   if (!url.pathname.startsWith('/api/')) return next()
+  const { fileBytes, query, record, summary, tableRows } = await loadDb()
   const path = url.pathname.slice(4) // strip "/api"
   try {
     if (req.method === 'GET' && path === '/health') {
@@ -72,12 +78,14 @@ export function shieldApi(): Plugin {
   return {
     name: 'shield-sqlite-api',
     configureServer(server) {
-      getDb()
-      server.config.logger.info(`  \x1b[31m▲\x1b[0m SQLite database: ${DB_PATH}`)
+      void loadDb().then(({ getDb, DB_PATH }) => {
+        getDb()
+        server.config.logger.info(`  \x1b[31m▲\x1b[0m SQLite database: ${DB_PATH}`)
+      })
       server.middlewares.use((req, res, next) => void handle(req, res, next))
     },
     configurePreviewServer(server) {
-      getDb()
+      void loadDb().then(({ getDb }) => getDb())
       server.middlewares.use((req, res, next) => void handle(req, res, next))
     },
   }
